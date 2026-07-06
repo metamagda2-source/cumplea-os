@@ -46,25 +46,12 @@
       background: #2a1c17;
     }
 
-    .hint {
-      position: absolute;
-      left: 14px;
-      bottom: 12px;
-      padding: 7px 10px;
-      border: 2px solid rgba(245, 239, 231, 0.16);
-      background: rgba(18, 13, 11, 0.58);
-      color: #f5efe7;
-      font-size: 13px;
-      line-height: 1;
-      user-select: none;
-    }
-
     .touch-controls {
       position: absolute;
-      right: 18px;
+      left: 18px; /* Movido a la izquierda */
       bottom: 16px;
       display: none;
-      grid-template-columns: repeat(3, 54px);
+      grid-template-columns: repeat(4, 54px); /* Agregada columna para el botón Usar */
       grid-template-rows: repeat(3, 54px);
       gap: 8px;
       user-select: none;
@@ -115,6 +102,18 @@
       grid-row: 3;
     }
 
+    .touch-use {
+      grid-column: 4;
+      grid-row: 2;
+      font-size: 15px;
+      background: rgba(80, 50, 30, 0.9);
+      display: none; /* Se muestra con JS */
+    }
+    
+    .touch-use.show {
+      display: grid;
+    }
+
     @media (pointer: coarse), (max-width: 760px) {
       body {
         align-items: start;
@@ -125,11 +124,6 @@
         width: 100%;
         max-height: none;
         margin-top: 4px;
-      }
-
-      .hint {
-        font-size: 12px;
-        bottom: 10px;
       }
 
       .touch-controls {
@@ -143,9 +137,9 @@
       }
 
       .touch-controls {
-        right: 10px;
+        left: 10px;
         bottom: 10px;
-        grid-template-columns: repeat(3, 46px);
+        grid-template-columns: repeat(4, 46px);
         grid-template-rows: repeat(3, 46px);
         gap: 6px;
       }
@@ -158,15 +152,14 @@
     }
   </style>
 </head>
-<body>
-  <main class="game-shell" aria-label="Habitacion estilo roguelike con personaje controlable">
+<body>  <main class="game-shell" aria-label="Habitacion estilo roguelike con personaje controlable">
     <canvas id="game" width="1280" height="720"></canvas>
-    <div class="hint">WASD para moverte</div>
     <nav class="touch-controls" aria-label="Controles tactiles de movimiento">
-      <button class="touch-button touch-up" type="button" data-key="w" aria-label="Mover arriba">↑</button>
-      <button class="touch-button touch-left" type="button" data-key="a" aria-label="Mover izquierda">←</button>
-      <button class="touch-button touch-right" type="button" data-key="d" aria-label="Mover derecha">→</button>
-      <button class="touch-button touch-down" type="button" data-key="s" aria-label="Mover abajo">↓</button>
+      <div class="touch-button touch-up" data-key="w" aria-label="Arriba">W</div>
+      <div class="touch-button touch-left" data-key="a" aria-label="Izquierda">A</div>
+      <div class="touch-button touch-right" data-key="d" aria-label="Derecha">D</div>
+      <div class="touch-button touch-down" data-key="s" aria-label="Abajo">S</div>
+      <div class="touch-button touch-use" id="useButton" data-action="use" aria-label="Usar Carta">Usar</div>
     </nav>
   </main>
 
@@ -206,6 +199,12 @@
 
     const pedestalImage = new Image();
     pedestalImage.src = "img/pedestal.png";
+
+    const agarroImage = new Image();
+    agarroImage.src = "img/agarro.png";
+
+    const cartaImage = new Image();
+    cartaImage.src = "img/carta.png";
 
     const inventory = {
       coins: 0,
@@ -266,6 +265,7 @@
     let facing = "down";
     let isMoving = false;
     let animationClock = 0;
+    let globalClock = 0;
 
     const room = {
       x: 24,
@@ -340,10 +340,15 @@
     const pedestal = {
       x: canvas.width / 2,
       y: canvas.height / 2,
-      radius: 20, // Colisión más pequeña acorde al nuevo tamaño
+      radius: 20, 
       vibrateTimer: 0,
-      vibrateDir: 1
+      vibrateDir: 1,
+      hasItem: true
     };
+
+    let isPickingUp = false;
+    let pickupTimer = 0;
+    let hasInvitation = false; // Guardará si ya tiene la carta
 
     const player = {
       x: canvas.width / 2,
@@ -355,10 +360,19 @@
     const keys = new Set();
     let lastTime = performance.now();
 
+    function useInvitation() {
+       if (!hasInvitation || isPickingUp) return;
+       isPickingUp = true;
+       pickupTimer = 1; // 1 segundo de animación
+    }
+
     window.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
       if (["w", "a", "s", "d"].includes(key)) {
         keys.add(key);
+        event.preventDefault();
+      } else if (key === "q" && hasInvitation) {
+        useInvitation();
         event.preventDefault();
       }
     });
@@ -369,17 +383,26 @@
 
     document.querySelectorAll(".touch-button").forEach((button) => {
       const key = button.dataset.key;
+      const action = button.dataset.action;
 
       const press = (event) => {
         event.preventDefault();
-        keys.add(key);
-        button.classList.add("is-pressed");
-        button.setPointerCapture?.(event.pointerId);
+        if (action === "use" && hasInvitation) {
+           useInvitation();
+           button.classList.add("is-pressed");
+           button.setPointerCapture?.(event.pointerId);
+           return;
+        }
+        if (key) {
+           keys.add(key);
+           button.classList.add("is-pressed");
+           button.setPointerCapture?.(event.pointerId);
+        }
       };
 
       const release = (event) => {
         event.preventDefault();
-        keys.delete(key);
+        if (key) keys.delete(key);
         button.classList.remove("is-pressed");
         button.releasePointerCapture?.(event.pointerId);
       };
@@ -551,14 +574,11 @@
     }
 
     function drawSpritePlayer() {
-      const frames = bodyFrames[facing] || bodyFrames.down;
-      const frameIndex = isMoving ? Math.floor(animationClock * 12) % frames.length : 0;
-      const body = frames[frameIndex];
       const scale = 2.2;
       const headWidth = headFrame.w * scale;
       const headHeight = headFrame.h * scale;
-      const bodyWidth = body.w * scale;
-      const bodyHeight = body.h * scale;
+      const bodyWidth = 18 * scale;
+      const bodyHeight = 13 * scale;
       const footY = player.y + 30;
       const bodyX = player.x - bodyWidth / 2;
       const bodyY = footY - bodyHeight;
@@ -572,12 +592,36 @@
 
       ctx.save();
       ctx.imageSmoothingEnabled = false;
-      if ((body.flip && facing !== "left") || (!body.flip && facing === "left")) {
-        ctx.translate(bodyX + bodyWidth, bodyY);
-        ctx.scale(-1, 1);
-        ctx.drawImage(characterSprite, body.x, body.y, body.w, body.h, 0, 0, bodyWidth, bodyHeight);
+      
+      if (isPickingUp && agarroImage.complete) {
+        // Asumimos que agarro.png es la pose entera o el cuerpo.
+        const aW = agarroImage.naturalWidth > 0 ? agarroImage.naturalWidth : 32;
+        const aH = agarroImage.naturalHeight > 0 ? agarroImage.naturalHeight : 32;
+        
+        const drawW = aW * scale;
+        const drawH = aH * scale;
+        
+        ctx.drawImage(agarroImage, headX + headWidth/2 - drawW/2, bodyY + bodyHeight - drawH + 5, drawW, drawH);
+        
+        // Dibujamos la carta arriba de los brazos (arriba de la cabeza)
+        if (cartaImage.complete) {
+           const cScale = 1.0; // Agrandada según petición
+           const cW = (cartaImage.naturalWidth > 0 ? cartaImage.naturalWidth : 32) * cScale;
+           const cH = (cartaImage.naturalHeight > 0 ? cartaImage.naturalHeight : 32) * cScale;
+           ctx.drawImage(cartaImage, headX + headWidth/2 - cW/2, headY - cH + 5, cW, cH);
+        }
       } else {
-        ctx.drawImage(characterSprite, body.x, body.y, body.w, body.h, bodyX, bodyY, bodyWidth, bodyHeight);
+        const frames = bodyFrames[facing] || bodyFrames.down;
+        const frameIndex = isMoving ? Math.floor(animationClock * 12) % frames.length : 0;
+        const body = frames[frameIndex];
+
+        if ((body.flip && facing !== "left") || (!body.flip && facing === "left")) {
+          ctx.translate(bodyX + bodyWidth, bodyY);
+          ctx.scale(-1, 1);
+          ctx.drawImage(characterSprite, body.x, body.y, body.w, body.h, 0, 0, bodyWidth, bodyHeight);
+        } else {
+          ctx.drawImage(characterSprite, body.x, body.y, body.w, body.h, bodyX, bodyY, bodyWidth, bodyHeight);
+        }
       }
       ctx.restore();
 
@@ -651,6 +695,29 @@
         ctx.fillText(value, startX + 48, y + 1);
       });
 
+      // Dibujar la carta de invitación abajo a la derecha si ya la recogió
+      if (hasInvitation && !isPickingUp && cartaImage.complete) {
+        const hudRightX = canvas.width - 240;
+        const hudRightY = canvas.height - 100;
+        
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.fillRect(hudRightX - 10, hudRightY - 10, 230, 80);
+        
+        const cw = cartaImage.naturalWidth > 0 ? cartaImage.naturalWidth : 32;
+        const ch = cartaImage.naturalHeight > 0 ? cartaImage.naturalHeight : 32;
+        ctx.drawImage(cartaImage, hudRightX, hudRightY, cw, ch);
+        
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.78)";
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "700 20px Arial, Helvetica, sans-serif";
+        ctx.lineWidth = 4;
+        
+        ctx.strokeText("Invitación", hudRightX + cw + 10, hudRightY + 20);
+        ctx.fillText("Invitación", hudRightX + cw + 10, hudRightY + 20);
+        ctx.strokeText("Cumpleaños", hudRightX + cw + 10, hudRightY + 50);
+        ctx.fillText("Cumpleaños", hudRightX + cw + 10, hudRightY + 50);
+      }
+
       ctx.restore();
     }
     function drawVignette() {
@@ -671,6 +738,8 @@
       if (keys.has("s")) dy += 1;
 
       isMoving = dx !== 0 || dy !== 0;
+
+      globalClock += delta; // El tiempo global siempre avanza
 
       if (isMoving) {
         if (Math.abs(dx) > Math.abs(dy)) {
@@ -810,6 +879,15 @@
          }
       }
 
+      if (isPickingUp) {
+         pickupTimer -= delta;
+         if (pickupTimer <= 0) {
+            isPickingUp = false;
+            hasInvitation = true; // Activa el HUD al terminar la animación
+            document.getElementById('useButton').classList.add('show'); // Activa el botón en celular
+         }
+      }
+
       if (currentRoom === "crown") {
          const dxPed = player.x - pedestal.x;
          const dyPed = player.y - (pedestal.y + 15); // Centro de colisión base
@@ -826,6 +904,14 @@
             if (isMoving && pedestal.vibrateTimer <= 0) {
                pedestal.vibrateTimer = 0.2;
                pedestal.vibrateDir = (dxPed < 0) ? -1 : 1; // vibra a la izq o der
+            }
+
+            // Agarrar objeto del pedestal
+            if (pedestal.hasItem) {
+               pedestal.hasItem = false;
+               isPickingUp = true;
+               pickupTimer = 1.0; // Dura 1 segundo exacto
+               // Aquí se podría agregar la lógica de recibir el ítem
             }
          }
 
@@ -969,6 +1055,20 @@
       ctx.imageSmoothingEnabled = false;
       ctx.translate(pedestal.x + vibX, pedestal.y);
       ctx.drawImage(pedestalImage, -drawW / 2, -drawH / 2 + 10, drawW, drawH);
+      
+      // Dibujar ítem encima del pedestal si todavía no se ha recogido
+      if (pedestal.hasItem && cartaImage.complete) {
+         // Animación de flotar constante con el globalClock
+         const hoverY = Math.sin(globalClock * 4) * 5;
+         
+         const cScale = 0.9; // Agrandada según petición
+         const cw = (cartaImage.naturalWidth > 0 ? cartaImage.naturalWidth : 32) * cScale;
+         const ch = (cartaImage.naturalHeight > 0 ? cartaImage.naturalHeight : 32) * cScale;
+         
+         // Offset ajustado (+3 en X para centrado visual, -30 en Y)
+         ctx.drawImage(cartaImage, -cw / 2 + 3, -30 - ch / 2 + hoverY, cw, ch);
+      }
+
       ctx.restore();
     }
 
