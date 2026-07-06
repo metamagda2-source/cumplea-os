@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Habitacion</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #11100f;
+      color: #f5efe7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(97, 68, 45, 0.28), transparent 42%),
+        #11100f;
+      touch-action: none;
+    }
+
+    .game-shell {
+      width: min(96vw, 1180px);
+      aspect-ratio: 16 / 9;
+      max-height: 92vh;
+      position: relative;
+      border: 6px solid #201713;
+      background: #211814;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      background: #2a1c17;
+    }
+
+    .hint {
+      position: absolute;
+      left: 14px;
+      bottom: 12px;
+      padding: 7px 10px;
+      border: 2px solid rgba(245, 239, 231, 0.16);
+      background: rgba(18, 13, 11, 0.58);
+      color: #f5efe7;
+      font-size: 13px;
+      line-height: 1;
+      user-select: none;
+    }
+
+    .touch-controls {
+      position: absolute;
+      right: 18px;
+      bottom: 16px;
+      display: none;
+      grid-template-columns: repeat(3, 54px);
+      grid-template-rows: repeat(3, 54px);
+      gap: 8px;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .touch-button {
+      width: 54px;
+      height: 54px;
+      border: 2px solid rgba(245, 239, 231, 0.28);
+      border-radius: 8px;
+      background: rgba(18, 13, 11, 0.68);
+      color: #f5efe7;
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.22);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .touch-button:active,
+    .touch-button.is-pressed {
+      transform: translateY(2px);
+      background: rgba(98, 65, 44, 0.84);
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.22);
+    }
+
+    .touch-up {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .touch-left {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .touch-right {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    .touch-down {
+      grid-column: 2;
+      grid-row: 3;
+    }
+
+    @media (pointer: coarse), (max-width: 760px) {
+      body {
+        align-items: start;
+        padding: 10px;
+      }
+
+      .game-shell {
+        width: 100%;
+        max-height: none;
+        margin-top: 4px;
+      }
+
+      .hint {
+        font-size: 12px;
+        bottom: 10px;
+      }
+
+      .touch-controls {
+        display: grid;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .game-shell {
+        border-width: 4px;
+      }
+
+      .touch-controls {
+        right: 10px;
+        bottom: 10px;
+        grid-template-columns: repeat(3, 46px);
+        grid-template-rows: repeat(3, 46px);
+        gap: 6px;
+      }
+
+      .touch-button {
+        width: 46px;
+        height: 46px;
+        font-size: 21px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell" aria-label="Habitacion estilo roguelike con personaje controlable">
+    <canvas id="game" width="1280" height="720"></canvas>
+    <div class="hint">WASD para moverte</div>
+    <nav class="touch-controls" aria-label="Controles tactiles de movimiento">
+      <button class="touch-button touch-up" type="button" data-key="w" aria-label="Mover arriba">↑</button>
+      <button class="touch-button touch-left" type="button" data-key="a" aria-label="Mover izquierda">←</button>
+      <button class="touch-button touch-right" type="button" data-key="d" aria-label="Mover derecha">→</button>
+      <button class="touch-button touch-down" type="button" data-key="s" aria-label="Mover abajo">↓</button>
+    </nav>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const characterSprite = new Image();
+    characterSprite.src = "img/caminar%20isaac.png";
+
+    const floorImage = new Image();
+    floorImage.src = "img/base.png";
+
+    const floor2Image = new Image();
+    floor2Image.src = "img/base%202.png";
+
+    const closedDoorImage = new Image();
+    closedDoorImage.src = "img/puerta%20cerrada1.png";
+
+    const openDoorImage = new Image();
+    openDoorImage.src = "img/puerta%20abierta1.png";
+
+    const hudImage = new Image();
+    hudImage.src = "img/hud%20images.png";
+
+    const heartsImage = new Image();
+    heartsImage.src = "img/hearts.png";
+
+    const keyImage = new Image();
+    keyImage.src = "img/llave.png";
+
+    const semiOpenDoorImage = new Image();
+    semiOpenDoorImage.src = "img/puerta%20semi%20cerrada%201.png";
+
+    const crownFloorImage = new Image();
+    crownFloorImage.src = "img/pisocorona.png";
+
+    const pedestalImage = new Image();
+    pedestalImage.src = "img/pedestal.png";
+
+    const inventory = {
+      coins: 0,
+      bombs: 0,
+      keys: 0
+    };
+
+    const hudIcons = [
+      { type: "coins", x: 62, y: 59, w: 18, h: 21 },
+      { type: "bombs", x: 56, y: 79, w: 24, h: 26 },
+      { type: "keys", x: 62, y: 106, w: 18, h: 23 }
+    ];
+
+    const headFrame = { x: 2, y: 2, w: 28, h: 25 };
+    const bodyFrames = {
+      left: [
+        { x: 8, y: 76, w: 16, h: 13 },
+        { x: 40, y: 76, w: 15, h: 13 },
+        { x: 71, y: 76, w: 16, h: 13 },
+        { x: 103, y: 75, w: 17, h: 14 },
+        { x: 135, y: 76, w: 17, h: 13 },
+        { x: 168, y: 76, w: 15, h: 13 },
+        { x: 200, y: 76, w: 15, h: 13 },
+        { x: 231, y: 76, w: 18, h: 13 }
+      ],
+      right: [
+        { x: 8, y: 76, w: 16, h: 13 },
+        { x: 40, y: 76, w: 15, h: 13 },
+        { x: 71, y: 76, w: 16, h: 13 },
+        { x: 103, y: 75, w: 17, h: 14 },
+        { x: 135, y: 76, w: 17, h: 13 },
+        { x: 168, y: 76, w: 15, h: 13 },
+        { x: 200, y: 76, w: 15, h: 13 },
+        { x: 231, y: 76, w: 18, h: 13 }
+      ],
+      down: [
+        { x: 7, y: 44, w: 18, h: 13 },
+        { x: 39, y: 44, w: 18, h: 13 },
+        { x: 72, y: 44, w: 18, h: 13 },
+        { x: 103, y: 44, w: 18, h: 15 },
+        { x: 135, y: 44, w: 18, h: 14 },
+        { x: 167, y: 44, w: 18, h: 13 },
+        { x: 199, y: 44, w: 18, h: 13 },
+        { x: 230, y: 44, w: 18, h: 13 }
+      ],
+      up: [
+        { x: 7, y: 44, w: 18, h: 13, flip: true },
+        { x: 39, y: 44, w: 18, h: 13, flip: true },
+        { x: 72, y: 44, w: 18, h: 13, flip: true },
+        { x: 103, y: 44, w: 18, h: 15, flip: true },
+        { x: 135, y: 44, w: 18, h: 14, flip: true },
+        { x: 167, y: 44, w: 18, h: 13, flip: true },
+        { x: 199, y: 44, w: 18, h: 13, flip: true },
+        { x: 230, y: 44, w: 18, h: 13, flip: true }
+      ]
+    };
+
+    let facing = "down";
+    let isMoving = false;
+    let animationClock = 0;
+
+    const room = {
+      x: 24,
+      y: 18,
+      width: 1232,
+      height: 684,
+      wall: 0
+    };
+
+    const walkableArea = {
+      left: room.x + 150,
+      right: room.x + room.width - 150,
+      top: room.y + 130,
+      bottom: room.y + room.height - 125
+    };
+
+    const topDoorExit = {
+      left: canvas.width / 2 - 92,
+      right: canvas.width / 2 + 92,
+      triggerY: walkableArea.top + 8
+    };
+
+    const bottomDoorExit = {
+      left: canvas.width / 2 - 92,
+      right: canvas.width / 2 + 92,
+      triggerY: walkableArea.bottom - 45
+    };
+
+    const rightDoorExit = {
+      top: 300,
+      bottom: 420,
+      triggerX: walkableArea.right - 20
+    };
+
+    const leftDoorExit = {
+      top: 300,
+      bottom: 420,
+      triggerX: walkableArea.left + 20
+    };
+
+    let crownDoorState = "closed"; // "closed", "opening", "open"
+    let crownDoorTimer = 0;
+
+    let currentRoom = "start";
+
+    const transitionState = {
+      active: false,
+      progress: 0,
+      phase: "fade_out",
+      speed: 4.5,
+      targetRoom: "",
+      targetX: 0,
+      targetY: 0,
+      targetFacing: ""
+    };
+
+    const keyItem = {
+      x: 640, // Centro del canvas
+      y: 300, 
+      scaleX: 1,
+      scaleY: 1,
+      z: 0,
+      vz: 0,
+      gravity: 800,
+      state: "idle",
+      collected: false,
+      spawned: false,
+      squashTimer: 0,
+      hoverTime: 0
+    };
+
+    const pedestal = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      radius: 20, // Colisión más pequeña acorde al nuevo tamaño
+      vibrateTimer: 0,
+      vibrateDir: 1
+    };
+
+    const player = {
+      x: canvas.width / 2,
+      y: canvas.height / 2 + 36,
+      radius: 20,
+      speed: 245
+    };
+
+    const keys = new Set();
+    let lastTime = performance.now();
+
+    window.addEventListener("keydown", (event) => {
+      const key = event.key.toLowerCase();
+      if (["w", "a", "s", "d"].includes(key)) {
+        keys.add(key);
+        event.preventDefault();
+      }
+    });
+
+    window.addEventListener("keyup", (event) => {
+      keys.delete(event.key.toLowerCase());
+    });
+
+    document.querySelectorAll(".touch-button").forEach((button) => {
+      const key = button.dataset.key;
+
+      const press = (event) => {
+        event.preventDefault();
+        keys.add(key);
+        button.classList.add("is-pressed");
+        button.setPointerCapture?.(event.pointerId);
+      };
+
+      const release = (event) => {
+        event.preventDefault();
+        keys.delete(key);
+        button.classList.remove("is-pressed");
+        button.releasePointerCapture?.(event.pointerId);
+      };
+
+      button.addEventListener("pointerdown", press);
+      button.addEventListener("pointerup", release);
+      button.addEventListener("pointercancel", release);
+      button.addEventListener("pointerleave", release);
+      button.addEventListener("contextmenu", (event) => event.preventDefault());
+    });
+
+    window.addEventListener("blur", () => {
+      keys.clear();
+      document.querySelectorAll(".touch-button").forEach((button) => {
+        button.classList.remove("is-pressed");
+      });
+    });
+
+    function drawNextRoomFloor() {
+      if (floor2Image.complete && floor2Image.naturalWidth > 0) {
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(floor2Image, room.x, room.y, room.width, room.height);
+        ctx.restore();
+        return;
+      }
+
+      ctx.fillStyle = "#5b4335";
+      ctx.fillRect(room.x, room.y, room.width, room.height);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(room.x, room.y, room.width, room.height);
+      ctx.clip();
+
+      for (let y = room.y + 18; y < room.y + room.height; y += 56) {
+        for (let x = room.x + 22; x < room.x + room.width; x += 72) {
+          ctx.fillStyle = (x + y) % 4 === 0 ? "#664c3d" : "#4f3b31";
+          ctx.fillRect(x, y, 48, 34);
+          ctx.strokeStyle = "rgba(31, 20, 16, 0.22)";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x, y, 48, 34);
+        }
+      }
+
+      ctx.restore();
+    }
+
+    function drawStoneFloor() {
+      ctx.fillStyle = "#6a5040";
+      ctx.fillRect(room.x, room.y, room.width, room.height);
+
+      if (floorImage.complete && floorImage.naturalWidth > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(room.x, room.y, room.width, room.height);
+        ctx.clip();
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(floorImage, room.x, room.y, room.width, room.height);
+        ctx.restore();
+        return;
+      }
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(room.x, room.y, room.width, room.height);
+      ctx.clip();
+
+      for (let y = room.y + 14; y < room.y + room.height; y += 62) {
+        for (let x = room.x + 18; x < room.x + room.width; x += 78) {
+          const offset = Math.sin((x + y) * 0.02) * 7;
+          ctx.fillStyle = (x + y) % 3 === 0 ? "#745844" : "#604837";
+          ctx.fillRect(x + offset, y, 52, 38);
+          ctx.strokeStyle = "rgba(42, 28, 22, 0.22)";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x + offset, y, 52, 38);
+        }
+      }
+
+      ctx.restore();
+    }
+
+    function drawWalls() {
+      ctx.fillStyle = "#3a241c";
+      ctx.fillRect(room.x - room.wall, room.y - room.wall, room.width + room.wall * 2, room.wall);
+      ctx.fillRect(room.x - room.wall, room.y + room.height, room.width + room.wall * 2, room.wall);
+      ctx.fillRect(room.x - room.wall, room.y, room.wall, room.height);
+      ctx.fillRect(room.x + room.width, room.y, room.wall, room.height);
+
+      ctx.strokeStyle = "#1f1410";
+      ctx.lineWidth = 9;
+      ctx.strokeRect(room.x - room.wall, room.y - room.wall, room.width + room.wall * 2, room.height + room.wall * 2);
+
+      ctx.strokeStyle = "rgba(245, 216, 180, 0.16)";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(room.x, room.y, room.width, room.height);
+    }
+
+    function drawDoor(x, y, width, height, side) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "#17100d";
+      ctx.fillRect(-width / 2, -height / 2, width, height);
+      ctx.strokeStyle = "#7b4f32";
+      ctx.lineWidth = 8;
+      ctx.strokeRect(-width / 2 + 4, -height / 2 + 4, width - 8, height - 8);
+
+      ctx.fillStyle = "#2b1a14";
+      if (side === "top") {
+        ctx.fillRect(-width / 2 + 14, -height / 2 + 14, width - 28, height + 12);
+      } else {
+        ctx.fillRect(-width / 2 + 14, -height / 2 + 14, width - 28, height - 28);
+      }
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.26)";
+      ctx.fillRect(-width / 2 + 20, height / 2 - 12, width - 40, 12);
+      ctx.restore();
+    }
+
+    function drawPlayer() {
+      if (characterSprite.complete && characterSprite.naturalWidth > 0) {
+        drawSpritePlayer();
+        return;
+      }
+
+      const shadowY = player.y + 24;
+      ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+      ctx.beginPath();
+      ctx.ellipse(player.x, shadowY, 20, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#21150f";
+      ctx.lineWidth = 5;
+
+      ctx.beginPath();
+      ctx.moveTo(player.x, player.y + 5);
+      ctx.lineTo(player.x, player.y + 28);
+      ctx.moveTo(player.x, player.y + 13);
+      ctx.lineTo(player.x - 17, player.y + 20);
+      ctx.moveTo(player.x, player.y + 13);
+      ctx.lineTo(player.x + 17, player.y + 20);
+      ctx.moveTo(player.x, player.y + 28);
+      ctx.lineTo(player.x - 12, player.y + 46);
+      ctx.moveTo(player.x, player.y + 28);
+      ctx.lineTo(player.x + 12, player.y + 46);
+      ctx.stroke();
+
+      ctx.fillStyle = "#e5c1a6";
+      ctx.strokeStyle = "#21150f";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y - 9, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#21150f";
+      ctx.beginPath();
+      ctx.arc(player.x - 6, player.y - 11, 2.5, 0, Math.PI * 2);
+      ctx.arc(player.x + 6, player.y - 11, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "#8a3f38";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y - 4, 5, 0.08 * Math.PI, 0.92 * Math.PI);
+      ctx.stroke();
+    }
+
+    function drawSpritePlayer() {
+      const frames = bodyFrames[facing] || bodyFrames.down;
+      const frameIndex = isMoving ? Math.floor(animationClock * 12) % frames.length : 0;
+      const body = frames[frameIndex];
+      const scale = 2.2;
+      const headWidth = headFrame.w * scale;
+      const headHeight = headFrame.h * scale;
+      const bodyWidth = body.w * scale;
+      const bodyHeight = body.h * scale;
+      const footY = player.y + 30;
+      const bodyX = player.x - bodyWidth / 2;
+      const bodyY = footY - bodyHeight;
+      const headX = player.x - headWidth / 2;
+      const headY = bodyY - headHeight + 10;
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+      ctx.beginPath();
+      ctx.ellipse(player.x, footY + 2, 18, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      if ((body.flip && facing !== "left") || (!body.flip && facing === "left")) {
+        ctx.translate(bodyX + bodyWidth, bodyY);
+        ctx.scale(-1, 1);
+        ctx.drawImage(characterSprite, body.x, body.y, body.w, body.h, 0, 0, bodyWidth, bodyHeight);
+      } else {
+        ctx.drawImage(characterSprite, body.x, body.y, body.w, body.h, bodyX, bodyY, bodyWidth, bodyHeight);
+      }
+      ctx.restore();
+
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(characterSprite, headFrame.x, headFrame.y, headFrame.w, headFrame.h, headX, headY, headWidth, headHeight);
+      ctx.restore();
+    }
+    function drawRightDoorOverlay() {
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      if (crownDoorState === "closed") {
+        if (closedDoorImage.complete && closedDoorImage.naturalWidth > 0) {
+          ctx.drawImage(closedDoorImage, room.x, room.y, room.width, room.height);
+        }
+      } else if (crownDoorState === "opening") {
+        if (crownDoorTimer < 0.15) {
+          if (semiOpenDoorImage.complete && semiOpenDoorImage.naturalWidth > 0) {
+            ctx.drawImage(semiOpenDoorImage, room.x, room.y, room.width, room.height);
+          }
+        } else {
+          if (openDoorImage.complete && openDoorImage.naturalWidth > 0) {
+            ctx.drawImage(openDoorImage, room.x, room.y, room.width, room.height);
+          }
+        }
+      } else if (crownDoorState === "open") {
+        if (openDoorImage.complete && openDoorImage.naturalWidth > 0) {
+          ctx.drawImage(openDoorImage, room.x, room.y, room.width, room.height);
+        }
+      }
+      ctx.restore();
+    }
+    function drawHud() {
+      const startX = 24;
+      const startY = 120;
+      const rowGap = 36;
+      const iconScale = 1.55;
+
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+
+      // La imagen de corazones es grande (pantalla completa), la desplazamos
+      // para que los corazones queden arriba a la izquierda.
+      if (heartsImage.complete && heartsImage.naturalWidth > 0) {
+        ctx.drawImage(heartsImage, -100, -25);
+      }
+
+      ctx.font = "700 28px Arial, Helvetica, sans-serif";
+      ctx.textBaseline = "middle";
+      ctx.lineWidth = 5;
+
+      hudIcons.forEach((icon, index) => {
+        const y = startY + index * rowGap;
+        const iconWidth = icon.w * iconScale;
+        const iconHeight = icon.h * iconScale;
+        const value = String(inventory[icon.type]).padStart(2, "0");
+
+        let drawX = startX;
+        // La bomba es más ancha, la desplazamos un poco a la izquierda para centrarla
+        if (icon.type === "bombs") {
+          drawX -= 4;
+        }
+
+        if (hudImage.complete && hudImage.naturalWidth > 0) {
+          ctx.drawImage(hudImage, icon.x, icon.y, icon.w, icon.h, drawX, y - iconHeight / 2, iconWidth, iconHeight);
+        }
+
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.78)";
+        ctx.fillStyle = "#f5efe7";
+        ctx.strokeText(value, startX + 48, y + 1);
+        ctx.fillText(value, startX + 48, y + 1);
+      });
+
+      ctx.restore();
+    }
+    function drawVignette() {
+      const gradient = ctx.createRadialGradient(640, 360, 180, 640, 360, 680);
+      gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+      gradient.addColorStop(1, "rgba(0, 0, 0, 0.46)");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function update(delta) {
+      let dx = 0;
+      let dy = 0;
+
+      if (keys.has("a")) dx -= 1;
+      if (keys.has("d")) dx += 1;
+      if (keys.has("w")) dy -= 1;
+      if (keys.has("s")) dy += 1;
+
+      isMoving = dx !== 0 || dy !== 0;
+
+      if (isMoving) {
+        if (Math.abs(dx) > Math.abs(dy)) {
+          facing = dx > 0 ? "right" : "left";
+        } else {
+          facing = dy > 0 ? "down" : "up";
+        }
+
+        const length = Math.hypot(dx, dy);
+        dx /= length;
+        dy /= length;
+        animationClock += delta;
+      }
+
+      player.x += dx * player.speed * delta;
+      player.y += dy * player.speed * delta;
+
+      const footOffsetY = 30;
+      const minX = walkableArea.left + player.radius;
+      const maxX = walkableArea.right - player.radius;
+      const minY = walkableArea.top - footOffsetY;
+      const maxY = walkableArea.bottom - footOffsetY;
+
+      if (transitionState.active) {
+        transitionState.progress += delta * transitionState.speed;
+        if (transitionState.phase === "fade_out" && transitionState.progress >= 1) {
+          transitionState.phase = "fade_in";
+          transitionState.progress = 0;
+          currentRoom = transitionState.targetRoom;
+          player.x = transitionState.targetX;
+          player.y = transitionState.targetY;
+          facing = transitionState.targetFacing;
+        } else if (transitionState.phase === "fade_in" && transitionState.progress >= 1) {
+          transitionState.active = false;
+          // Iniciar animación de la llave si entramos a "next"
+          if (currentRoom === "next" && !keyItem.collected && !keyItem.spawned) {
+             keyItem.spawned = true;
+             keyItem.state = "dropping";
+             keyItem.z = 100;
+             keyItem.vz = -150; // Salta un poco hacia arriba primero
+          }
+        }
+        return; // Detener movimiento y acciones durante la transición
+      }
+
+      if (currentRoom === "next" && !keyItem.collected && keyItem.spawned) {
+         if (keyItem.state === "dropping") {
+            keyItem.vz += keyItem.gravity * delta;
+            keyItem.z -= keyItem.vz * delta;
+            
+            if (keyItem.z <= 0) {
+               keyItem.z = 0;
+               keyItem.state = "squashing";
+               keyItem.squashTimer = 0;
+               keyItem.vz = 0;
+            }
+         } else if (keyItem.state === "squashing") {
+            keyItem.squashTimer += delta;
+            if (keyItem.squashTimer < 0.06) {
+               keyItem.scaleX = 1 + (keyItem.squashTimer / 0.06) * 0.5;
+               keyItem.scaleY = 1 - (keyItem.squashTimer / 0.06) * 0.5;
+            } else if (keyItem.squashTimer < 0.12) {
+               const p = (keyItem.squashTimer - 0.06) / 0.06;
+               keyItem.scaleX = 1.5 - p * 0.7;
+               keyItem.scaleY = 0.5 + p * 0.7;
+            } else if (keyItem.squashTimer < 0.18) {
+               const p = (keyItem.squashTimer - 0.12) / 0.06;
+               keyItem.scaleX = 0.8 + p * 0.2;
+               keyItem.scaleY = 1.2 - p * 0.2;
+            } else {
+               keyItem.scaleX = 1;
+               keyItem.scaleY = 1;
+               keyItem.state = "idle";
+               keyItem.hoverTime = 0;
+            }
+         } else if (keyItem.state === "idle") {
+            keyItem.hoverTime += delta;
+            keyItem.z = Math.sin(keyItem.hoverTime * 3) * 5 + 5;
+            
+            const dx = player.x - keyItem.x;
+            const dy = player.y - keyItem.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist < player.radius + 15) {
+               keyItem.state = "collecting";
+               keyItem.collectTimer = 0;
+               inventory.keys += 1;
+            }
+         } else if (keyItem.state === "collecting") {
+            keyItem.collectTimer += delta;
+            // Animación dura solo 0.12 segundos (muy rápido)
+            if (keyItem.collectTimer >= 0.12) {
+               keyItem.collected = true;
+            }
+         }
+      }
+
+      if (
+        currentRoom === "start" &&
+        dy < 0 &&
+        player.x >= topDoorExit.left &&
+        player.x <= topDoorExit.right &&
+        player.y <= topDoorExit.triggerY
+      ) {
+        transitionState.active = true;
+        transitionState.progress = 0;
+        transitionState.phase = "fade_out";
+        transitionState.targetRoom = "next";
+        transitionState.targetX = canvas.width / 2;
+        transitionState.targetY = walkableArea.bottom - footOffsetY - 15;
+        transitionState.targetFacing = "up";
+        keys.clear();
+        return;
+      }
+
+      if (
+        currentRoom === "next" &&
+        dy > 0 &&
+        player.x >= bottomDoorExit.left &&
+        player.x <= bottomDoorExit.right &&
+        player.y >= bottomDoorExit.triggerY
+      ) {
+        transitionState.active = true;
+        transitionState.progress = 0;
+        transitionState.phase = "fade_out";
+        transitionState.targetRoom = "start";
+        transitionState.targetX = canvas.width / 2;
+        transitionState.targetY = walkableArea.top + 15;
+        transitionState.targetFacing = "down";
+        keys.clear();
+        return;
+      }
+
+      if (crownDoorState === "opening") {
+         crownDoorTimer += delta;
+         if (crownDoorTimer >= 0.3) {
+            crownDoorState = "open";
+         }
+      }
+
+      if (currentRoom === "crown") {
+         const dxPed = player.x - pedestal.x;
+         const dyPed = player.y - (pedestal.y + 15); // Centro de colisión base
+         const dist = Math.hypot(dxPed, dyPed);
+         const minDist = player.radius + pedestal.radius;
+         
+         if (dist < minDist) {
+            // Empuja al jugador hacia afuera (es duro)
+            const angle = Math.atan2(dyPed, dxPed);
+            player.x = pedestal.x + Math.cos(angle) * minDist;
+            player.y = (pedestal.y + 15) + Math.sin(angle) * minDist;
+
+            // Activa vibración si Isaac empuja el pedestal
+            if (isMoving && pedestal.vibrateTimer <= 0) {
+               pedestal.vibrateTimer = 0.2;
+               pedestal.vibrateDir = (dxPed < 0) ? -1 : 1; // vibra a la izq o der
+            }
+         }
+
+         if (pedestal.vibrateTimer > 0) {
+            pedestal.vibrateTimer -= delta;
+         }
+      }
+
+      if (
+        currentRoom === "start" &&
+        dx > 0 &&
+        player.x >= rightDoorExit.triggerX &&
+        player.y >= rightDoorExit.top &&
+        player.y <= rightDoorExit.bottom
+      ) {
+        if (crownDoorState === "closed" && inventory.keys > 0) {
+          // Consumir llave y abrir la puerta
+          inventory.keys -= 1;
+          crownDoorState = "opening";
+          crownDoorTimer = 0;
+          player.x = rightDoorExit.triggerX - 2; // Retrocede tantito para no traspasar instantáneo
+        } else if (crownDoorState === "open") {
+          transitionState.active = true;
+          transitionState.progress = 0;
+          transitionState.phase = "fade_out";
+          transitionState.targetRoom = "crown";
+          transitionState.targetX = walkableArea.left + 40; // Entrar desde izquierda
+          transitionState.targetY = canvas.height / 2;
+          transitionState.targetFacing = "right";
+          keys.clear();
+          return;
+        }
+      }
+
+      if (
+        currentRoom === "crown" &&
+        dx < 0 &&
+        player.x <= leftDoorExit.triggerX &&
+        player.y >= leftDoorExit.top &&
+        player.y <= leftDoorExit.bottom
+      ) {
+        transitionState.active = true;
+        transitionState.progress = 0;
+        transitionState.phase = "fade_out";
+        transitionState.targetRoom = "start";
+        transitionState.targetX = walkableArea.right - 40; // Aparece por derecha
+        transitionState.targetY = canvas.height / 2;
+        transitionState.targetFacing = "left";
+        keys.clear();
+        return;
+      }
+
+      player.x = Math.max(minX, Math.min(maxX, player.x));
+      player.y = Math.max(minY, Math.min(maxY, player.y));
+    }
+
+    function drawKeyItem() {
+      if (currentRoom !== "next" || keyItem.collected || !keyItem.spawned) return;
+      if (!keyImage.complete || keyImage.naturalWidth === 0) return;
+
+      const drawX = keyItem.x;
+      const drawY = keyItem.y - keyItem.z;
+
+      // Sombra
+      if (keyItem.state !== "collecting") {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+        ctx.beginPath();
+        const shadowW = Math.max(0, 18 - (keyItem.z * 0.05));
+        const shadowH = Math.max(0, 6 - (keyItem.z * 0.015));
+        ctx.ellipse(keyItem.x, keyItem.y + 10, shadowW, shadowH, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Llave
+      ctx.save();
+      ctx.translate(drawX, drawY);
+      
+      let scale = 2.4; // Agrandada un poco la base (antes era 1.8)
+      
+      if (keyItem.state === "collecting") {
+         const p = keyItem.collectTimer / 0.12; // Va de 0 a 1
+         scale = 2.4 + p * 3.5; // Crece gigante rapidísimo
+         ctx.scale(1.8, 0.7); // Efecto visual: muy ancha y algo achatada
+         ctx.globalAlpha = 1 - p; // Desaparece
+      } else {
+         ctx.scale(keyItem.scaleX, keyItem.scaleY);
+      }
+      
+      ctx.imageSmoothingEnabled = false;
+      
+      // Recorte de la llave (Asumimos 32x32 arriba a la izquierda)
+      ctx.drawImage(keyImage, 0, 0, 32, 32, -16 * scale, -16 * scale, 32 * scale, 32 * scale);
+      
+      // Brillos (si está flotando)
+      if (keyItem.state === "idle") {
+        const frame = Math.floor(animationClock * 8) % 4; 
+        const sparkleSrcX = 32 + (frame * 16); 
+        const sparkleSrcY = 0; 
+        
+        // Ajustamos tamaño para la nueva escala
+        const sSize = 7 * scale; 
+        const sDrawX = -5 * scale; 
+        const sDrawY = -7 * scale; 
+        
+        ctx.drawImage(keyImage, sparkleSrcX, sparkleSrcY, 16, 16, sDrawX, sDrawY, sSize, sSize);
+      }
+      
+      ctx.restore();
+    }
+
+    function drawCrownFloor() {
+      if (crownFloorImage.complete && crownFloorImage.naturalWidth > 0) {
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(crownFloorImage, room.x, room.y, room.width, room.height);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = "#2b2b2b";
+        ctx.fillRect(room.x, room.y, room.width, room.height);
+      }
+    }
+
+    function drawPedestal() {
+      if (currentRoom !== "crown" || !pedestalImage.complete) return;
+      
+      let vibX = 0;
+      if (pedestal.vibrateTimer > 0) {
+         // Vibración muy rápida lateral
+         vibX = Math.sin(pedestal.vibrateTimer * 60) * 4 * pedestal.vibrateDir;
+      }
+      
+      const scale = 0.8; // Escala reducida para que no sea gigante
+      const pw = 64 * scale; 
+      const ph = 64 * scale; 
+      
+      // Si la imagen es más grande o pequeña, podemos usar naturalWidth:
+      const drawW = (pedestalImage.naturalWidth > 0) ? pedestalImage.naturalWidth * scale : pw;
+      const drawH = (pedestalImage.naturalHeight > 0) ? pedestalImage.naturalHeight * scale : ph;
+
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.translate(pedestal.x + vibX, pedestal.y);
+      ctx.drawImage(pedestalImage, -drawW / 2, -drawH / 2 + 10, drawW, drawH);
+      ctx.restore();
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#120d0b";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (currentRoom === "start") {
+        drawStoneFloor();
+        drawRightDoorOverlay();
+      } else if (currentRoom === "next") {
+        drawNextRoomFloor();
+      } else if (currentRoom === "crown") {
+        drawCrownFloor();
+        drawPedestal();
+      }
+      
+      drawKeyItem();
+      drawPlayer();
+      drawVignette();
+      drawHud();
+
+      if (transitionState.active) {
+        ctx.fillStyle = "black";
+        let alpha = transitionState.phase === "fade_out" ? transitionState.progress : 1 - transitionState.progress;
+        ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalAlpha = 1.0;
+      }
+    }
+
+    function loop(now) {
+      const delta = Math.min((now - lastTime) / 1000, 0.033);
+      lastTime = now;
+      update(delta);
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    render();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
