@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -48,10 +49,12 @@
 
     .touch-controls {
       position: absolute;
-      left: 18px; /* Movido a la izquierda */
+      left: 18px;
+      /* Movido a la izquierda */
       bottom: 16px;
       display: none;
-      grid-template-columns: repeat(4, 54px); /* Agregada columna para el botón Usar */
+      grid-template-columns: repeat(4, 54px);
+      /* Agregada columna para el botón Usar */
       grid-template-rows: repeat(3, 54px);
       gap: 8px;
       user-select: none;
@@ -107,14 +110,16 @@
       grid-row: 2;
       font-size: 15px;
       background: rgba(80, 50, 30, 0.9);
-      display: none; /* Se muestra con JS */
+      display: none;
+      /* Se muestra con JS */
     }
-    
+
     .touch-use.show {
       display: grid;
     }
 
-    @media (pointer: coarse), (max-width: 760px) {
+    @media (pointer: coarse),
+    (max-width: 760px) {
       body {
         align-items: start;
         padding: 10px;
@@ -150,9 +155,217 @@
         font-size: 21px;
       }
     }
+
+    /* Character Selection Screen */
+    #character-selection {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    #character-selection.hidden {
+      display: none;
+    }
+
+    .selection-container {
+      position: relative;
+      width: min(96vw, 1000px);
+      aspect-ratio: 16 / 9;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bg-paper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      z-index: 1;
+    }
+
+    .carousel-container {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      width: 100%;
+      margin-top: 15%;
+    }
+
+    .side-char {
+      max-width: 100px;
+      max-height: 100px;
+      object-fit: contain;
+      filter: grayscale(80%) opacity(70%);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 60px; /* Aligns side chars with center char's body */
+    }
+
+    .side-char:hover {
+      filter: grayscale(40%) opacity(90%);
+      transform: scale(1.1);
+    }
+
+    .character-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .character-display img {
+      max-height: 210px;
+      max-width: 210px;
+      object-fit: contain;
+      transition: transform 0.2s;
+    }
+
+    .character-name {
+      margin-top: 15px;
+      font-size: 40px;
+      font-weight: 900;
+      color: #1a1a1a;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      text-shadow: 2px 2px 0px rgba(255,255,255,0.7);
+    }
+
+    .selection-arrows {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      transform: translateY(-50%);
+      z-index: 3;
+      padding: 0 10%;
+    }
+
+    .arrow-btn {
+      background: transparent;
+      color: #1a1a1a;
+      font-size: 60px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
+      text-shadow: 2px 2px 0px rgba(255,255,255,0.7);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .arrow-btn:hover {
+      transform: scale(1.2);
+    }
+    
+    .arrow-btn:active {
+      transform: scale(0.9);
+    }
+
+    .start-btn {
+      display: none; /* Oculto en PC por defecto */
+      position: absolute;
+      bottom: 12%;
+      z-index: 3;
+      padding: 8px 24px;
+      font-size: 20px;
+      font-weight: 900;
+      background: #1a1a1a;
+      color: #f5efe7;
+      border: 3px solid #f5efe7;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.6);
+      text-transform: uppercase;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Mostrar botón jugar en pantallas táctiles o móviles */
+    @media (pointer: coarse), (max-width: 760px) {
+      .start-btn {
+        display: block;
+      }
+    }
+
+    .start-btn:hover {
+      background: #333;
+      transform: translateY(-2px);
+    }
+
+    .start-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    }
+
+    @media (max-width: 560px) {
+      .selection-arrows {
+        padding: 0 2%;
+      }
+      .arrow-btn {
+        font-size: 45px;
+      }
+      .character-name {
+        font-size: 28px;
+      }
+      .character-display img {
+        max-height: 180px;
+      }
+      .start-btn {
+        display: block;
+        font-size: 14px;
+        padding: 6px 14px;
+        bottom: 5%;
+      }
+      .side-char {
+        max-width: 60px;
+        max-height: 60px;
+      }
+      .carousel-container {
+        gap: 15px;
+      }
+    }
   </style>
 </head>
-<body>  <main class="game-shell" aria-label="Habitacion estilo roguelike con personaje controlable">
+
+<body>
+  <div id="character-selection">
+    <div class="selection-container">
+      <img class="bg-paper" src="img/personas/quien%20eres%20.png" alt="Who am I?">
+      <div class="carousel-container">
+        <img id="prev-char-img" class="side-char" src="" alt="Previous">
+        <div class="character-display">
+          <img id="current-character-img" src="" alt="Character">
+          <h2 id="current-character-name" class="character-name">Name</h2>
+        </div>
+        <img id="next-char-img" class="side-char" src="" alt="Next">
+      </div>
+      <div class="selection-arrows">
+        <button class="arrow-btn" id="btn-prev">◀</button>
+        <button class="arrow-btn" id="btn-next">▶</button>
+      </div>
+      <button id="btn-start" class="start-btn">Jugar</button>
+    </div>
+  </div>
+
+  <main class="game-shell" aria-label="Habitacion estilo roguelike con personaje controlable">
     <canvas id="game" width="1280" height="720"></canvas>
     <nav class="touch-controls" aria-label="Controles tactiles de movimiento">
       <div class="touch-button touch-up" data-key="w" aria-label="Arriba">W</div>
@@ -164,11 +377,115 @@
   </main>
 
   <script>
+    // Character Selection Logic
+    const availableCharacters = [
+      { name: "Andres", img: "img/personas/Andres.png", spriteSheet: "img/caminar%20isaac.png", customHeadSrc: "img/personas/caminar%20juego/cabeza_andres.png", bodyStretch: 1.6, headOffsetY: 4 },
+      { name: "Esteban", img: "img/personas/Esteban.png", spriteSheet: "img/caminar%20isaac.png", customHeadSrc: "img/personas/caminar%20juego/cabeza_esteban.png", headOffsetY: 4 },
+      { name: "Mathias", img: "img/personas/Mathias.jpeg", spriteSheet: "img/caminar%20isaac.png", customHeadSrc: "img/personas/caminar%20juego/cabeza_mathias.png", headOffsetY: 12 },
+      { name: "Manu", img: "img/personas/manu.png", spriteSheet: "img/caminar%20isaac.png", customHeadSrc: "img/personas/caminar%20juego/cabeza_manu.png", headOffsetY: 12 },
+      { name: "Martín", img: "img/personas/martin.jpeg", spriteSheet: "img/personas/caminar%20juego/caminar%20martin.png", customHeadSrc: "img/personas/caminar%20juego/cabeza_martin.png", headOffsetY: 2, customHeadScale: 0.85 },
+      { 
+        name: "Sara", 
+        img: "img/personas/Sara.jpeg", 
+        spriteSheet: "img/personas/caminar%20juego/caminar%20sara.png", 
+        customHeadSrc: "img/personas/caminar%20juego/cabeza_sara.png", 
+        agarroSrc: "img/personas/caminar%20juego/agarro_sara.png",
+        headOffsetY: 4,
+        pets: [
+          { src: "img/personas/caminar%20juego/gato%20sara.png", offsetX: -35, scale: 0.25 },
+          { src: "img/personas/caminar%20juego/perro%20sara.png", offsetX: 35, scale: 0.25 }
+        ]
+      }
+    ];
+    let selectedCharIndex = 0;
+
+    const charSelectionScreen = document.getElementById('character-selection');
+    const currentCharImg = document.getElementById('current-character-img');
+    const currentCharName = document.getElementById('current-character-name');
+    const prevCharImg = document.getElementById('prev-char-img');
+    const nextCharImg = document.getElementById('next-char-img');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    const btnStart = document.getElementById('btn-start');
+
+    function updateCharacterDisplay() {
+      const char = availableCharacters[selectedCharIndex];
+      currentCharImg.src = char.img;
+      currentCharName.textContent = char.name;
+
+      const prevIndex = (selectedCharIndex - 1 + availableCharacters.length) % availableCharacters.length;
+      const nextIndex = (selectedCharIndex + 1) % availableCharacters.length;
+
+      prevCharImg.src = availableCharacters[prevIndex].img;
+      nextCharImg.src = availableCharacters[nextIndex].img;
+    }
+
+    function nextCharacter() {
+      selectedCharIndex = (selectedCharIndex + 1) % availableCharacters.length;
+      updateCharacterDisplay();
+    }
+
+    function prevCharacter() {
+      selectedCharIndex = (selectedCharIndex - 1 + availableCharacters.length) % availableCharacters.length;
+      updateCharacterDisplay();
+    }
+
+    btnNext.addEventListener('click', nextCharacter);
+    btnPrev.addEventListener('click', prevCharacter);
+    nextCharImg.addEventListener('click', nextCharacter);
+    prevCharImg.addEventListener('click', prevCharacter);
+
+    let activePets = [];
+
+    btnStart.addEventListener('click', () => {
+      charSelectionScreen.classList.add('hidden');
+      const char = availableCharacters[selectedCharIndex];
+      characterSprite.src = char.spriteSheet;
+      
+      if (char.customHeadSrc) {
+        customHeadImage = new Image();
+        customHeadImage.src = char.customHeadSrc;
+        currentHeadOffsetY = char.headOffsetY !== undefined ? char.headOffsetY : -5;
+      } else {
+        customHeadImage = null;
+      }
+      
+      currentBodyStretch = char.bodyStretch || 1.0;
+      currentHeadScale = char.customHeadScale || 1.15;
+
+      agarroImage.src = char.agarroSrc || "img/agarro.png";
+
+      if (char.pets) {
+        activePets = char.pets.map(p => {
+          const img = new Image();
+          img.src = p.src;
+          return { img: img, offsetX: p.offsetX, scale: p.scale, timeOffset: Math.random() * Math.PI * 2 };
+        });
+      } else {
+        activePets = [];
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (!charSelectionScreen.classList.contains('hidden')) {
+        if (e.key === 'ArrowRight') nextCharacter();
+        if (e.key === 'ArrowLeft') prevCharacter();
+        if (e.key === 'Enter') btnStart.click();
+      }
+    });
+
+    // Inicializar la pantalla
+    updateCharacterDisplay();
+
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
 
     const characterSprite = new Image();
     characterSprite.src = "img/caminar%20isaac.png";
+    let customHeadImage = null;
+    let currentHeadOffsetY = 0;
+    let currentBodyStretch = 1.0;
+    let currentHeadScale = 1.15;
 
     const floorImage = new Image();
     floorImage.src = "img/base.png";
@@ -324,7 +641,7 @@
 
     const keyItem = {
       x: 640, // Centro del canvas
-      y: 300, 
+      y: 300,
       scaleX: 1,
       scaleY: 1,
       z: 0,
@@ -340,7 +657,7 @@
     const pedestal = {
       x: canvas.width / 2,
       y: canvas.height / 2,
-      radius: 20, 
+      radius: 20,
       vibrateTimer: 0,
       vibrateDir: 1,
       hasItem: true
@@ -361,9 +678,9 @@
     let lastTime = performance.now();
 
     function useInvitation() {
-       if (!hasInvitation || isPickingUp) return;
-       isPickingUp = true;
-       pickupTimer = 1; // 1 segundo de animación
+      if (!hasInvitation || isPickingUp) return;
+      isPickingUp = true;
+      pickupTimer = 1; // 1 segundo de animación
     }
 
     window.addEventListener("keydown", (event) => {
@@ -388,15 +705,15 @@
       const press = (event) => {
         event.preventDefault();
         if (action === "use" && hasInvitation) {
-           useInvitation();
-           button.classList.add("is-pressed");
-           button.setPointerCapture?.(event.pointerId);
-           return;
+          useInvitation();
+          button.classList.add("is-pressed");
+          button.setPointerCapture?.(event.pointerId);
+          return;
         }
         if (key) {
-           keys.add(key);
-           button.classList.add("is-pressed");
-           button.setPointerCapture?.(event.pointerId);
+          keys.add(key);
+          button.classList.add("is-pressed");
+          button.setPointerCapture?.(event.pointerId);
         }
       };
 
@@ -578,7 +895,9 @@
       const headWidth = headFrame.w * scale;
       const headHeight = headFrame.h * scale;
       const bodyWidth = 18 * scale;
-      const bodyHeight = 13 * scale;
+      // Cuando agarra el objeto, usamos el tamaño de cuerpo normal para que la cabeza no flote
+      const effectiveBodyStretch = isPickingUp ? 1.0 : currentBodyStretch;
+      const bodyHeight = 13 * scale * effectiveBodyStretch;
       const footY = player.y + 30;
       const bodyX = player.x - bodyWidth / 2;
       const bodyY = footY - bodyHeight;
@@ -592,23 +911,23 @@
 
       ctx.save();
       ctx.imageSmoothingEnabled = false;
-      
+
       if (isPickingUp && agarroImage.complete) {
         // Asumimos que agarro.png es la pose entera o el cuerpo.
         const aW = agarroImage.naturalWidth > 0 ? agarroImage.naturalWidth : 32;
         const aH = agarroImage.naturalHeight > 0 ? agarroImage.naturalHeight : 32;
-        
+
         const drawW = aW * scale;
         const drawH = aH * scale;
-        
-        ctx.drawImage(agarroImage, headX + headWidth/2 - drawW/2, bodyY + bodyHeight - drawH + 5, drawW, drawH);
-        
+
+        ctx.drawImage(agarroImage, headX + headWidth / 2 - drawW / 2, bodyY + bodyHeight - drawH + 5, drawW, drawH);
+
         // Dibujamos la carta arriba de los brazos (arriba de la cabeza)
         if (cartaImage.complete) {
-           const cScale = 1.0; // Agrandada según petición
-           const cW = (cartaImage.naturalWidth > 0 ? cartaImage.naturalWidth : 32) * cScale;
-           const cH = (cartaImage.naturalHeight > 0 ? cartaImage.naturalHeight : 32) * cScale;
-           ctx.drawImage(cartaImage, headX + headWidth/2 - cW/2, headY - cH + 5, cW, cH);
+          const cScale = 1.0; // Agrandada según petición
+          const cW = (cartaImage.naturalWidth > 0 ? cartaImage.naturalWidth : 32) * cScale;
+          const cH = (cartaImage.naturalHeight > 0 ? cartaImage.naturalHeight : 32) * cScale;
+          ctx.drawImage(cartaImage, headX + headWidth / 2 - cW / 2, headY - cH + 5, cW, cH);
         }
       } else {
         const frames = bodyFrames[facing] || bodyFrames.down;
@@ -626,9 +945,52 @@
       ctx.restore();
 
       ctx.save();
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(characterSprite, headFrame.x, headFrame.y, headFrame.w, headFrame.h, headX, headY, headWidth, headHeight);
+      if (customHeadImage && customHeadImage.complete) {
+        ctx.imageSmoothingEnabled = true; // Suaviza la imagen al achicarla
+        const srcW = customHeadImage.naturalWidth > 0 ? customHeadImage.naturalWidth : headWidth;
+        const srcH = customHeadImage.naturalHeight > 0 ? customHeadImage.naturalHeight : headHeight;
+        
+        // Calculamos la proporción para que encaje bien en el espacio de la cabeza original
+        const scaleFactor = Math.min(headWidth / srcW, headHeight / srcH);
+        const finalW = srcW * scaleFactor * currentHeadScale;
+        const finalH = srcH * scaleFactor * currentHeadScale;
+        
+        const offsetX = (headWidth - finalW) / 2;
+        const offsetY = (headHeight - finalH) / 2;
+        
+        ctx.drawImage(customHeadImage, 0, 0, srcW, srcH, headX + offsetX, headY + offsetY + currentHeadOffsetY, finalW, finalH);
+      } else {
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(characterSprite, headFrame.x, headFrame.y, headFrame.w, headFrame.h, headX, headY, headWidth, headHeight);
+      }
       ctx.restore();
+
+      // Dibujar mascotas
+      if (activePets && activePets.length > 0) {
+        activePets.forEach(pet => {
+          if (pet.img.complete && pet.img.naturalWidth > 0) {
+            // Efecto de gravedad (flotando arriba y abajo usando el tiempo global)
+            const floatY = Math.sin(globalClock * 3 + pet.timeOffset) * 8;
+            
+            const pW = pet.img.naturalWidth * pet.scale;
+            const pH = pet.img.naturalHeight * pet.scale;
+            const pX = player.x + pet.offsetX - pW / 2;
+            const pY = player.y - 15 + floatY - pH / 2;
+            
+            // Sombra de la mascota
+            ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+            ctx.beginPath();
+            ctx.ellipse(player.x + pet.offsetX, footY + 2, pW * 0.4, pW * 0.15, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Mascota
+            ctx.save();
+            ctx.imageSmoothingEnabled = true; // Para que no pierdan calidad si son muy grandes
+            ctx.drawImage(pet.img, pX, pY, pW, pH);
+            ctx.restore();
+          }
+        });
+      }
     }
     function drawRightDoorOverlay() {
       ctx.save();
@@ -699,19 +1061,19 @@
       if (hasInvitation && !isPickingUp && cartaImage.complete) {
         const hudRightX = canvas.width - 240;
         const hudRightY = canvas.height - 100;
-        
+
         ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
         ctx.fillRect(hudRightX - 10, hudRightY - 10, 230, 80);
-        
+
         const cw = cartaImage.naturalWidth > 0 ? cartaImage.naturalWidth : 32;
         const ch = cartaImage.naturalHeight > 0 ? cartaImage.naturalHeight : 32;
         ctx.drawImage(cartaImage, hudRightX, hudRightY, cw, ch);
-        
+
         ctx.strokeStyle = "rgba(0, 0, 0, 0.78)";
         ctx.fillStyle = "#ffffff";
         ctx.font = "700 20px Arial, Helvetica, sans-serif";
         ctx.lineWidth = 4;
-        
+
         ctx.strokeText("Invitación", hudRightX + cw + 10, hudRightY + 20);
         ctx.fillText("Invitación", hudRightX + cw + 10, hudRightY + 20);
         ctx.strokeText("Cumpleaños", hudRightX + cw + 10, hudRightY + 50);
@@ -776,64 +1138,64 @@
           transitionState.active = false;
           // Iniciar animación de la llave si entramos a "next"
           if (currentRoom === "next" && !keyItem.collected && !keyItem.spawned) {
-             keyItem.spawned = true;
-             keyItem.state = "dropping";
-             keyItem.z = 100;
-             keyItem.vz = -150; // Salta un poco hacia arriba primero
+            keyItem.spawned = true;
+            keyItem.state = "dropping";
+            keyItem.z = 100;
+            keyItem.vz = -150; // Salta un poco hacia arriba primero
           }
         }
         return; // Detener movimiento y acciones durante la transición
       }
 
       if (currentRoom === "next" && !keyItem.collected && keyItem.spawned) {
-         if (keyItem.state === "dropping") {
-            keyItem.vz += keyItem.gravity * delta;
-            keyItem.z -= keyItem.vz * delta;
-            
-            if (keyItem.z <= 0) {
-               keyItem.z = 0;
-               keyItem.state = "squashing";
-               keyItem.squashTimer = 0;
-               keyItem.vz = 0;
-            }
-         } else if (keyItem.state === "squashing") {
-            keyItem.squashTimer += delta;
-            if (keyItem.squashTimer < 0.06) {
-               keyItem.scaleX = 1 + (keyItem.squashTimer / 0.06) * 0.5;
-               keyItem.scaleY = 1 - (keyItem.squashTimer / 0.06) * 0.5;
-            } else if (keyItem.squashTimer < 0.12) {
-               const p = (keyItem.squashTimer - 0.06) / 0.06;
-               keyItem.scaleX = 1.5 - p * 0.7;
-               keyItem.scaleY = 0.5 + p * 0.7;
-            } else if (keyItem.squashTimer < 0.18) {
-               const p = (keyItem.squashTimer - 0.12) / 0.06;
-               keyItem.scaleX = 0.8 + p * 0.2;
-               keyItem.scaleY = 1.2 - p * 0.2;
-            } else {
-               keyItem.scaleX = 1;
-               keyItem.scaleY = 1;
-               keyItem.state = "idle";
-               keyItem.hoverTime = 0;
-            }
-         } else if (keyItem.state === "idle") {
-            keyItem.hoverTime += delta;
-            keyItem.z = Math.sin(keyItem.hoverTime * 3) * 5 + 5;
-            
-            const dx = player.x - keyItem.x;
-            const dy = player.y - keyItem.y;
-            const dist = Math.hypot(dx, dy);
-            if (dist < player.radius + 15) {
-               keyItem.state = "collecting";
-               keyItem.collectTimer = 0;
-               inventory.keys += 1;
-            }
-         } else if (keyItem.state === "collecting") {
-            keyItem.collectTimer += delta;
-            // Animación dura solo 0.12 segundos (muy rápido)
-            if (keyItem.collectTimer >= 0.12) {
-               keyItem.collected = true;
-            }
-         }
+        if (keyItem.state === "dropping") {
+          keyItem.vz += keyItem.gravity * delta;
+          keyItem.z -= keyItem.vz * delta;
+
+          if (keyItem.z <= 0) {
+            keyItem.z = 0;
+            keyItem.state = "squashing";
+            keyItem.squashTimer = 0;
+            keyItem.vz = 0;
+          }
+        } else if (keyItem.state === "squashing") {
+          keyItem.squashTimer += delta;
+          if (keyItem.squashTimer < 0.06) {
+            keyItem.scaleX = 1 + (keyItem.squashTimer / 0.06) * 0.5;
+            keyItem.scaleY = 1 - (keyItem.squashTimer / 0.06) * 0.5;
+          } else if (keyItem.squashTimer < 0.12) {
+            const p = (keyItem.squashTimer - 0.06) / 0.06;
+            keyItem.scaleX = 1.5 - p * 0.7;
+            keyItem.scaleY = 0.5 + p * 0.7;
+          } else if (keyItem.squashTimer < 0.18) {
+            const p = (keyItem.squashTimer - 0.12) / 0.06;
+            keyItem.scaleX = 0.8 + p * 0.2;
+            keyItem.scaleY = 1.2 - p * 0.2;
+          } else {
+            keyItem.scaleX = 1;
+            keyItem.scaleY = 1;
+            keyItem.state = "idle";
+            keyItem.hoverTime = 0;
+          }
+        } else if (keyItem.state === "idle") {
+          keyItem.hoverTime += delta;
+          keyItem.z = Math.sin(keyItem.hoverTime * 3) * 5 + 5;
+
+          const dx = player.x - keyItem.x;
+          const dy = player.y - keyItem.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < player.radius + 15) {
+            keyItem.state = "collecting";
+            keyItem.collectTimer = 0;
+            inventory.keys += 1;
+          }
+        } else if (keyItem.state === "collecting") {
+          keyItem.collectTimer += delta;
+          // Animación dura solo 0.12 segundos (muy rápido)
+          if (keyItem.collectTimer >= 0.12) {
+            keyItem.collected = true;
+          }
+        }
       }
 
       if (
@@ -873,51 +1235,51 @@
       }
 
       if (crownDoorState === "opening") {
-         crownDoorTimer += delta;
-         if (crownDoorTimer >= 0.3) {
-            crownDoorState = "open";
-         }
+        crownDoorTimer += delta;
+        if (crownDoorTimer >= 0.3) {
+          crownDoorState = "open";
+        }
       }
 
       if (isPickingUp) {
-         pickupTimer -= delta;
-         if (pickupTimer <= 0) {
-            isPickingUp = false;
-            hasInvitation = true; // Activa el HUD al terminar la animación
-            document.getElementById('useButton').classList.add('show'); // Activa el botón en celular
-         }
+        pickupTimer -= delta;
+        if (pickupTimer <= 0) {
+          isPickingUp = false;
+          hasInvitation = true; // Activa el HUD al terminar la animación
+          document.getElementById('useButton').classList.add('show'); // Activa el botón en celular
+        }
       }
 
       if (currentRoom === "crown") {
-         const dxPed = player.x - pedestal.x;
-         const dyPed = player.y - (pedestal.y + 15); // Centro de colisión base
-         const dist = Math.hypot(dxPed, dyPed);
-         const minDist = player.radius + pedestal.radius;
-         
-         if (dist < minDist) {
-            // Empuja al jugador hacia afuera (es duro)
-            const angle = Math.atan2(dyPed, dxPed);
-            player.x = pedestal.x + Math.cos(angle) * minDist;
-            player.y = (pedestal.y + 15) + Math.sin(angle) * minDist;
+        const dxPed = player.x - pedestal.x;
+        const dyPed = player.y - (pedestal.y + 15); // Centro de colisión base
+        const dist = Math.hypot(dxPed, dyPed);
+        const minDist = player.radius + pedestal.radius;
 
-            // Activa vibración si Isaac empuja el pedestal
-            if (isMoving && pedestal.vibrateTimer <= 0) {
-               pedestal.vibrateTimer = 0.2;
-               pedestal.vibrateDir = (dxPed < 0) ? -1 : 1; // vibra a la izq o der
-            }
+        if (dist < minDist) {
+          // Empuja al jugador hacia afuera (es duro)
+          const angle = Math.atan2(dyPed, dxPed);
+          player.x = pedestal.x + Math.cos(angle) * minDist;
+          player.y = (pedestal.y + 15) + Math.sin(angle) * minDist;
 
-            // Agarrar objeto del pedestal
-            if (pedestal.hasItem) {
-               pedestal.hasItem = false;
-               isPickingUp = true;
-               pickupTimer = 1.0; // Dura 1 segundo exacto
-               // Aquí se podría agregar la lógica de recibir el ítem
-            }
-         }
+          // Activa vibración si Isaac empuja el pedestal
+          if (isMoving && pedestal.vibrateTimer <= 0) {
+            pedestal.vibrateTimer = 0.2;
+            pedestal.vibrateDir = (dxPed < 0) ? -1 : 1; // vibra a la izq o der
+          }
 
-         if (pedestal.vibrateTimer > 0) {
-            pedestal.vibrateTimer -= delta;
-         }
+          // Agarrar objeto del pedestal
+          if (pedestal.hasItem) {
+            pedestal.hasItem = false;
+            isPickingUp = true;
+            pickupTimer = 1.0; // Dura 1 segundo exacto
+            // Aquí se podría agregar la lógica de recibir el ítem
+          }
+        }
+
+        if (pedestal.vibrateTimer > 0) {
+          pedestal.vibrateTimer -= delta;
+        }
       }
 
       if (
@@ -988,37 +1350,37 @@
       // Llave
       ctx.save();
       ctx.translate(drawX, drawY);
-      
+
       let scale = 2.4; // Agrandada un poco la base (antes era 1.8)
-      
+
       if (keyItem.state === "collecting") {
-         const p = keyItem.collectTimer / 0.12; // Va de 0 a 1
-         scale = 2.4 + p * 3.5; // Crece gigante rapidísimo
-         ctx.scale(1.8, 0.7); // Efecto visual: muy ancha y algo achatada
-         ctx.globalAlpha = 1 - p; // Desaparece
+        const p = keyItem.collectTimer / 0.12; // Va de 0 a 1
+        scale = 2.4 + p * 3.5; // Crece gigante rapidísimo
+        ctx.scale(1.8, 0.7); // Efecto visual: muy ancha y algo achatada
+        ctx.globalAlpha = 1 - p; // Desaparece
       } else {
-         ctx.scale(keyItem.scaleX, keyItem.scaleY);
+        ctx.scale(keyItem.scaleX, keyItem.scaleY);
       }
-      
+
       ctx.imageSmoothingEnabled = false;
-      
+
       // Recorte de la llave (Asumimos 32x32 arriba a la izquierda)
       ctx.drawImage(keyImage, 0, 0, 32, 32, -16 * scale, -16 * scale, 32 * scale, 32 * scale);
-      
+
       // Brillos (si está flotando)
       if (keyItem.state === "idle") {
-        const frame = Math.floor(animationClock * 8) % 4; 
-        const sparkleSrcX = 32 + (frame * 16); 
-        const sparkleSrcY = 0; 
-        
+        const frame = Math.floor(animationClock * 8) % 4;
+        const sparkleSrcX = 32 + (frame * 16);
+        const sparkleSrcY = 0;
+
         // Ajustamos tamaño para la nueva escala
-        const sSize = 7 * scale; 
-        const sDrawX = -5 * scale; 
-        const sDrawY = -7 * scale; 
-        
+        const sSize = 7 * scale;
+        const sDrawX = -5 * scale;
+        const sDrawY = -7 * scale;
+
         ctx.drawImage(keyImage, sparkleSrcX, sparkleSrcY, 16, 16, sDrawX, sDrawY, sSize, sSize);
       }
-      
+
       ctx.restore();
     }
 
@@ -1036,17 +1398,17 @@
 
     function drawPedestal() {
       if (currentRoom !== "crown" || !pedestalImage.complete) return;
-      
+
       let vibX = 0;
       if (pedestal.vibrateTimer > 0) {
-         // Vibración muy rápida lateral
-         vibX = Math.sin(pedestal.vibrateTimer * 60) * 4 * pedestal.vibrateDir;
+        // Vibración muy rápida lateral
+        vibX = Math.sin(pedestal.vibrateTimer * 60) * 4 * pedestal.vibrateDir;
       }
-      
+
       const scale = 0.8; // Escala reducida para que no sea gigante
-      const pw = 64 * scale; 
-      const ph = 64 * scale; 
-      
+      const pw = 64 * scale;
+      const ph = 64 * scale;
+
       // Si la imagen es más grande o pequeña, podemos usar naturalWidth:
       const drawW = (pedestalImage.naturalWidth > 0) ? pedestalImage.naturalWidth * scale : pw;
       const drawH = (pedestalImage.naturalHeight > 0) ? pedestalImage.naturalHeight * scale : ph;
@@ -1055,18 +1417,18 @@
       ctx.imageSmoothingEnabled = false;
       ctx.translate(pedestal.x + vibX, pedestal.y);
       ctx.drawImage(pedestalImage, -drawW / 2, -drawH / 2 + 10, drawW, drawH);
-      
+
       // Dibujar ítem encima del pedestal si todavía no se ha recogido
       if (pedestal.hasItem && cartaImage.complete) {
-         // Animación de flotar constante con el globalClock
-         const hoverY = Math.sin(globalClock * 4) * 5;
-         
-         const cScale = 0.9; // Agrandada según petición
-         const cw = (cartaImage.naturalWidth > 0 ? cartaImage.naturalWidth : 32) * cScale;
-         const ch = (cartaImage.naturalHeight > 0 ? cartaImage.naturalHeight : 32) * cScale;
-         
-         // Offset ajustado (+3 en X para centrado visual, -30 en Y)
-         ctx.drawImage(cartaImage, -cw / 2 + 3, -30 - ch / 2 + hoverY, cw, ch);
+        // Animación de flotar constante con el globalClock
+        const hoverY = Math.sin(globalClock * 4) * 5;
+
+        const cScale = 0.9; // Agrandada según petición
+        const cw = (cartaImage.naturalWidth > 0 ? cartaImage.naturalWidth : 32) * cScale;
+        const ch = (cartaImage.naturalHeight > 0 ? cartaImage.naturalHeight : 32) * cScale;
+
+        // Offset ajustado (+3 en X para centrado visual, -30 en Y)
+        ctx.drawImage(cartaImage, -cw / 2 + 3, -30 - ch / 2 + hoverY, cw, ch);
       }
 
       ctx.restore();
@@ -1086,7 +1448,7 @@
         drawCrownFloor();
         drawPedestal();
       }
-      
+
       drawKeyItem();
       drawPlayer();
       drawVignette();
@@ -1113,16 +1475,5 @@
     requestAnimationFrame(loop);
   </script>
 </body>
+
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
