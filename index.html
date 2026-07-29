@@ -22,11 +22,10 @@
       min-height: 100vh;
       display: grid;
       place-items: center;
-      overflow: hidden;
+      overflow: auto;
       background:
         radial-gradient(circle at 50% 45%, rgba(97, 68, 45, 0.28), transparent 42%),
         #11100f;
-      touch-action: none;
     }
 
     .game-shell {
@@ -525,6 +524,11 @@
     const cartaImage = new Image();
     cartaImage.src = "img/carta.png";
 
+    const mensajeCumpleanosImage = new Image();
+    mensajeCumpleanosImage.src = "img/personas/caminar%20juego/mensaje%20de%20cumplea%C3%B1os.png";
+
+    let isShowingMessage = false;
+
     const inventory = {
       coins: 0,
       bombs: 0,
@@ -681,12 +685,18 @@
 
     function useInvitation() {
       if (!hasInvitation || isPickingUp) return;
-      isPickingUp = true;
-      pickupTimer = 1; // 1 segundo de animación
+      isShowingMessage = !isShowingMessage; // Mostrar/Ocultar mensaje
     }
 
     window.addEventListener("keydown", (event) => {
       const key = event.key.toLowerCase();
+      
+      if (event.key === "Escape" && isShowingMessage) {
+        isShowingMessage = false;
+        event.preventDefault();
+        return;
+      }
+      
       if (["w", "a", "s", "d"].includes(key)) {
         keys.add(key);
         event.preventDefault();
@@ -1093,6 +1103,7 @@
     }
 
     function update(delta) {
+      if (isShowingMessage) return; // Bloquear movimiento si la imagen está abierta
       let dx = 0;
       let dy = 0;
 
@@ -1462,6 +1473,32 @@
         ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.globalAlpha = 1.0;
+      }
+
+      // Dibujar overlay de mensaje de cumpleaños
+      if (isShowingMessage && mensajeCumpleanosImage.complete) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const mw = mensajeCumpleanosImage.naturalWidth > 0 ? mensajeCumpleanosImage.naturalWidth : 600;
+        const mh = mensajeCumpleanosImage.naturalHeight > 0 ? mensajeCumpleanosImage.naturalHeight : 400;
+        
+        // Ajustar escala para que quepa en pantalla
+        const scaleFactor = Math.min((canvas.width - 100) / mw, (canvas.height - 100) / mh, 1.0);
+        const finalW = mw * scaleFactor;
+        const finalH = mh * scaleFactor;
+        const finalX = (canvas.width - finalW) / 2;
+        const finalY = (canvas.height - finalH) / 2;
+        
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(mensajeCumpleanosImage, finalX, finalY, finalW, finalH);
+        
+        // Texto de ayuda
+        ctx.fillStyle = "white";
+        ctx.font = "bold 20px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Presiona ESC o Q para cerrar", canvas.width / 2, canvas.height - 30);
+        ctx.textAlign = "left"; // Restaurar alineación
       }
     }
 
